@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Battered shield helper
 // @namespace    https://github.com/AlorelUserscripts/battered-shield-notifier
-// @version      0.1.1
+// @version      0.1.2
 // @description  Helps with your battered shields
 // @author       Alorel
 // @include      /^https?:\/\/(?=www\.)?batteredshield\.com\/game\/?/
@@ -11,10 +11,11 @@
 // @icon64       https://cdn.rawgit.com/AlorelUserscripts/battered-shield-notifier/93f9519972e5cb25734c29fa241a90a150e55dbf/icon-64.png
 // @icon         https://cdn.rawgit.com/AlorelUserscripts/battered-shield-notifier/93f9519972e5cb25734c29fa241a90a150e55dbf/icon-32.png
 // @grant        GM_notification
-// @grant        GM_getResourceURL
 // @run-at       document-start
 // @downloadURL  https://raw.githubusercontent.com/AlorelUserscripts/battered-shield-notifier/master/battered-shield-helper.user.js
 // @updateURL    https://raw.githubusercontent.com/AlorelUserscripts/battered-shield-notifier/master/battered-shield-helper.meta.js
+// @homepage     https://github.com/AlorelUserscripts/battered-shield-notifier
+// @supportURL   https://github.com/AlorelUserscripts/battered-shield-notifier/issues
 // ==/UserScript==
 
 (function () {

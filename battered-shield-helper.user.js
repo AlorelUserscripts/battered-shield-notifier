@@ -1,12 +1,13 @@
 // ==UserScript==
 // @name         Battered shield helper
 // @namespace    https://github.com/AlorelUserscripts/battered-shield-notifier
-// @version      0.1
+// @version      0.1.1
 // @description  Helps with your battered shields
 // @author       Alorel
 // @include      /^https?:\/\/(?=www\.)?batteredshield\.com\/game\/?/
 // @require      https://cdnjs.cloudflare.com/ajax/libs/knockout/3.4.1/knockout-min.js
 // @require      https://cdnjs.cloudflare.com/ajax/libs/buzz/1.2.0/buzz.min.js
+// @require      https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js
 // @icon64       https://cdn.rawgit.com/AlorelUserscripts/battered-shield-notifier/93f9519972e5cb25734c29fa241a90a150e55dbf/icon-64.png
 // @icon         https://cdn.rawgit.com/AlorelUserscripts/battered-shield-notifier/93f9519972e5cb25734c29fa241a90a150e55dbf/icon-32.png
 // @grant        GM_notification
@@ -37,6 +38,9 @@
     }
 
     var mutationObserverSettings = {childList: true, characterData: true, attributes: true, subtree: true};
+    var regex = {
+        xOutOfY: /([0-9\.]+)\s*\/\s*([0-9\.]+)/
+    };
 
     function readyFn() {
         document.removeEventListener('DOMContentLoaded', readyFn);
@@ -44,7 +48,8 @@
         //Define model
         var model = {
             apPCT: ko.observable(0),
-            timer: ko.observable(0)
+            timer: ko.observable(0),
+            hpPCT: ko.observable(0)
         };
 
         // Observe timer
@@ -59,9 +64,8 @@
         //Observe AP
         (function () {
             var node = document.querySelector(".attrib_value.ap_data");
-            var regex = /([0-9\.]+)\s*\/\s*([0-9\.]+)/;
             new MutationObserver(function () {
-                var match = node.textContent.trim().match(regex);
+                var match = node.textContent.trim().match(regex.xOutOfY);
 
                 if (match) {
                     model.apPCT(parseFloat(match[1]) / parseFloat(match[2]) * 100);
@@ -69,6 +73,19 @@
             }).observe(node, mutationObserverSettings);
         })();
 
+        //Observe HP
+        (function () {
+            var node = document.querySelector('.attrib_name[title="Hit Points"]').nextElementSibling;
+            new MutationObserver(function () {
+                var match = node.textContent.trim().match(regex.xOutOfY);
+
+                if (match) {
+                    model.hpPCT(parseFloat(match[1]) / parseFloat(match[2]) * 100);
+                }
+            }).observe(node, mutationObserverSettings);
+        })();
+
+        // Subscribe
         model.timer.subscribe(function (newVal) {
             console.debug('Timer: ' + newVal);
             // clearTimeout(timerTimeout);
@@ -76,10 +93,18 @@
                 notify('Actions finished: ' + newVal);
             }
         });
+
         model.apPCT.subscribe(function (newVal) {
             console.debug('AP: ' + newVal.toFixed(3));
             if (newVal >= 100) {
                 notify('AP full!');
+            }
+        });
+
+        model.hpPCT.subscribe(function (newVal) {
+            console.debug('HP: ' + newVal.toFixed(3));
+            if (newVal >= 100) {
+                notify('HP full!');
             }
         })
     }

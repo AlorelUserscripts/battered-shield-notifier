@@ -1,13 +1,12 @@
 // ==UserScript==
 // @name         Battered shield helper
 // @namespace    https://github.com/AlorelUserscripts/battered-shield-notifier
-// @version      0.1.2
+// @version      0.1.3
 // @description  Helps with your battered shields
 // @author       Alorel
 // @include      /^https?:\/\/(?=www\.)?batteredshield\.com\/game\/?/
 // @require      https://cdnjs.cloudflare.com/ajax/libs/knockout/3.4.1/knockout-min.js
 // @require      https://cdnjs.cloudflare.com/ajax/libs/buzz/1.2.0/buzz.min.js
-// @require      https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js
 // @icon64       https://cdn.rawgit.com/AlorelUserscripts/battered-shield-notifier/93f9519972e5cb25734c29fa241a90a150e55dbf/icon-64.png
 // @icon         https://cdn.rawgit.com/AlorelUserscripts/battered-shield-notifier/93f9519972e5cb25734c29fa241a90a150e55dbf/icon-32.png
 // @grant        GM_notification

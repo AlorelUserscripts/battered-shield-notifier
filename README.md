@@ -11,3 +11,4 @@ Tested in Tampermonkey (Chrome). Won't test on Firefox, but it should work there
 - Notify on full AP
 - Notify on full HP
 - Notify on idling
+- Notify on captcha

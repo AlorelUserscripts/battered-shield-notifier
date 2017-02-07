@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         Battered shield helper
 // @namespace    https://github.com/AlorelUserscripts/battered-shield-notifier
-// @version      0.1.3
+// @version      0.2
 // @description  Helps with your battered shields
 // @author       Alorel
 // @include      /^https?:\/\/(?=www\.)?batteredshield\.com\/game\/?/
+// @require      https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js
 // @require      https://cdnjs.cloudflare.com/ajax/libs/knockout/3.4.1/knockout-min.js
 // @require      https://cdnjs.cloudflare.com/ajax/libs/buzz/1.2.0/buzz.min.js
 // @icon64       https://cdn.rawgit.com/AlorelUserscripts/battered-shield-notifier/93f9519972e5cb25734c29fa241a90a150e55dbf/icon-64.png
@@ -24,15 +25,16 @@
         loop: false
     });
 
-    function notify(msg, preventSound) {
+    function notify(msg, options) {
         console.debug('Notifying: ' + msg);
+        options = $.extend(
+            {text: msg, timeout: 15000, sound: true},
+            options || {}
+        );
 
-        GM_notification({
-            text: msg,
-            timeout: 15000
-        });
+        GM_notification(options);
 
-        if (!(preventSound || false)) {
+        if (options.sound) {
             sfx.play();
         }
     }
@@ -49,7 +51,8 @@
         var model = {
             apPCT: ko.observable(0),
             timer: ko.observable(0),
-            hpPCT: ko.observable(0)
+            hpPCT: ko.observable(0),
+            captcha: ko.observable(false)
         };
 
         // Observe timer
@@ -85,6 +88,14 @@
             }).observe(node, mutationObserverSettings);
         })();
 
+        //Observe captcha
+        (function () {
+            var $node = $(".PopupCaptcha");
+            new MutationObserver(function () {
+                model.captcha($node.is(":visible"));
+            }).observe($node[0], mutationObserverSettings);
+        })();
+
         // Subscribe
         model.timer.subscribe(function (newVal) {
             console.debug('Timer: ' + newVal);
@@ -106,7 +117,13 @@
             if (newVal >= 100) {
                 notify('HP full!');
             }
-        })
+        });
+
+        model.captcha.subscribe(function (visible) {
+            if (visible) {
+                notify('Captcha!', {timeout: Number.MAX_VALUE});
+            }
+        });
     }
 
     document.addEventListener('DOMContentLoaded', readyFn);

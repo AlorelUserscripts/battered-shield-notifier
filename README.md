@@ -1,0 +1,1 @@
+Tested in Tampermonkey (Chrome). Won't test on Firefox.

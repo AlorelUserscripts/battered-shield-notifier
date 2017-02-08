@@ -4,12 +4,18 @@ const debug = function (v) {
         value: v
     });
 };
+const gmo = require('./gm-observable');
+const toast = require('./toast');
 
 let observables = {
     apPCT: ko.observable(0),
     timer: ko.observable(0),
     hpPCT: ko.observable(0),
-    captcha: ko.observable(false)
+    captcha: ko.observable(false),
+    notify_AP: gmo.boolean('notify_ap', true),
+    notify_HP: gmo.boolean('notify_hp', true),
+    notify_captcha: gmo.boolean('notify_captcha', true),
+    notify_timer: gmo.boolean('notify_timer', true)
 };
 
 let addListeners = [];
@@ -43,14 +49,21 @@ module.exports = {
     }
 };
 
-unsafeWindow.batteredShieldHelper = {
-    get debug() {
-        let out = {};
+GM_registerMenuCommand(`Debug ${GM_info.script.name}`, () => {
+    let ob = {},
+        gm = {};
 
-        for (let k of Object.keys(observables)) {
-            out[k] = observables[k]();
-        }
-
-        return out;
+    for (let k of Object.keys(observables)) {
+        ob[k] = observables[k]();
     }
-};
+
+    for (let k of GM_listValues()) {
+        gm[k] = GM_getValue(k);
+    }
+
+    console.debug({
+        observables: ob,
+        storage: gm
+    });
+    toast('See the console');
+});

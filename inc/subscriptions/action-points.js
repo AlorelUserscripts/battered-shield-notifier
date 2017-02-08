@@ -6,9 +6,10 @@ const options = {
     }
 };
 const notify = require('../notify');
+const model = require('../model').model;
 
-require('../model').model.apPCT.subscribe(v => {
-    if (v >= 100.0) {
+model.apPCT.subscribe(v => {
+    if (v >= 100.0 && model.notify_AP()) {
         notify('AP full!', options);
     }
 });

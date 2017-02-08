@@ -4,7 +4,7 @@
 // ==UserScript==
 // @name         Battered shield helper
 // @namespace    https://github.com/AlorelUserscripts/battered-shield-notifier
-// @version      0.2.1
+// @version      0.3
 // @description  Helps with your battered shields
 // @author       Alorel
 // @include      /^https?:\/\/(?=www\.)?batteredshield\.com\/game\/?/
@@ -22,17 +22,31 @@
 // @grant        GM_notification
 // @grant        GM_info
 // @grant        GM_getResourceText
-// @grant        unsafeWindow
+// @grant        GM_registerMenuCommand
+// @grant        GM_getValue
+// @grant        GM_setValue
+// @grant        GM_listValues
 //
+// @require      https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js
 // @require      https://cdnjs.cloudflare.com/ajax/libs/knockout/3.4.1/knockout-min.js
 // @require      https://raw.githubusercontent.com/AlorelUserscripts/battered-shield-notifier/0242848a5d5c34368d81582051dd051b6a11ee70/lib/buzz.min.js
 // @require      https://raw.githubusercontent.com/AlorelUserscripts/battered-shield-notifier/0242848a5d5c34368d81582051dd051b6a11ee70/lib/knockout.min.js
 // @require      https://raw.githubusercontent.com/AlorelUserscripts/battered-shield-notifier/44d6524c94a9fd58a1c8c63909debbbcbe00ba8d/lib/jquery.toast.min.js
+
+// @require  https://raw.githubusercontent.com/AlorelUserscripts/battered-shield-notifier/63cb7a7b1087226c1e138c687dc58f2b9f9f531e/lib/remodal.min.js
 //
 // @resource toast_css https://raw.githubusercontent.com/AlorelUserscripts/battered-shield-notifier/44d6524c94a9fd58a1c8c63909debbbcbe00ba8d/lib/jquery.toast.min.css
+// @resource remodal_css1 https://raw.githubusercontent.com/AlorelUserscripts/battered-shield-notifier/63cb7a7b1087226c1e138c687dc58f2b9f9f531e/lib/remodal.css
+// @resource remodal_css2 https://raw.githubusercontent.com/AlorelUserscripts/battered-shield-notifier/63cb7a7b1087226c1e138c687dc58f2b9f9f531e/lib/remodal-default-theme.css
+// @resource bs_css1 https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css
+// @resource bs_css2 https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css
 // ==/UserScript==
 
 $(document).one('DOMContentLoaded', function () {
+    $('<style>' + ['remodal_css1', 'remodal_css2', 'toast_css'].map(GM_getResourceText).reduce(function (acc, curr) {
+        return acc + curr;
+    }) + '</style>').append('.remodal-overlay,.remodal-wrapper{z-index:100000}').appendTo(document.body);
+
     require('./inc/observers/action-point');
     require('./inc/observers/action-timer');
     require('./inc/observers/captcha');
@@ -43,11 +57,55 @@ $(document).one('DOMContentLoaded', function () {
     require('./inc/subscriptions/captcha');
     require('./inc/subscriptions/full-health');
 
+    require('./inc/register-menu');
+
     require('./inc/toast')(GM_info.script.name + ' v' + GM_info.script.version + ' loaded.');
 });
 
-},{"./inc/observers/action-point":4,"./inc/observers/action-timer":5,"./inc/observers/captcha":6,"./inc/observers/hp":7,"./inc/subscriptions/action-points":10,"./inc/subscriptions/actions-finished":11,"./inc/subscriptions/captcha":12,"./inc/subscriptions/full-health":13,"./inc/toast":14}],2:[function(require,module,exports){
+require('./inc/debugify-gm');
+
+},{"./inc/debugify-gm":2,"./inc/observers/action-point":6,"./inc/observers/action-timer":7,"./inc/observers/captcha":8,"./inc/observers/hp":9,"./inc/register-menu":11,"./inc/subscriptions/action-points":13,"./inc/subscriptions/actions-finished":14,"./inc/subscriptions/captcha":15,"./inc/subscriptions/full-health":16,"./inc/toast":17}],2:[function(require,module,exports){
+'use strict';
+
+var orig = {
+    setvalue: GM_setValue,
+    getvalue: GM_getValue
+};
+
+GM_setValue = function GM_setValue(key, value) {
+    console.debug({ operation: 'set-value', key: key, value: value });
+    orig.setvalue.call(null, key, value);
+};
+
+GM_getValue = function GM_getValue(key, defaultReturn) {
+    defaultReturn = defaultReturn || null;
+    var returnValue = orig.getvalue.call(null, key, defaultReturn);
+    console.debug({ operation: 'get-value', key: key, defaultReturn: defaultReturn, returnValue: returnValue });
+    return returnValue;
+};
+
+},{}],3:[function(require,module,exports){
 "use strict";
+
+var string = function string(key, def) {
+    var r = ko.observable(GM_getValue(key, def || ""));
+    r.subscribe(function (v) {
+        return GM_setValue(key, v);
+    });
+    return r;
+};
+var boolean = function boolean(key, def) {
+    var r = ko.observable(1 == GM_getValue(key, def));
+    r.subscribe(function (v) {
+        return GM_setValue(key, v ? 1 : 0);
+    });
+    return r;
+};
+
+module.exports = { string: string, boolean: boolean };
+
+},{}],4:[function(require,module,exports){
+'use strict';
 
 var debug = function debug(v) {
     console.debug({
@@ -55,12 +113,18 @@ var debug = function debug(v) {
         value: v
     });
 };
+var gmo = require('./gm-observable');
+var toast = require('./toast');
 
 var observables = {
     apPCT: ko.observable(0),
     timer: ko.observable(0),
     hpPCT: ko.observable(0),
-    captcha: ko.observable(false)
+    captcha: ko.observable(false),
+    notify_AP: gmo.boolean('notify_ap', true),
+    notify_HP: gmo.boolean('notify_hp', true),
+    notify_captcha: gmo.boolean('notify_captcha', true),
+    notify_timer: gmo.boolean('notify_timer', true)
 };
 
 var addListeners = [];
@@ -136,40 +200,68 @@ module.exports = {
     }
 };
 
-unsafeWindow.batteredShieldHelper = {
-    get debug() {
-        var out = {};
+GM_registerMenuCommand('Debug ' + GM_info.script.name, function () {
+    var ob = {},
+        gm = {};
 
-        var _iteratorNormalCompletion3 = true;
-        var _didIteratorError3 = false;
-        var _iteratorError3 = undefined;
+    var _iteratorNormalCompletion3 = true;
+    var _didIteratorError3 = false;
+    var _iteratorError3 = undefined;
 
+    try {
+        for (var _iterator3 = Object.keys(observables)[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+            var k = _step3.value;
+
+            ob[k] = observables[k]();
+        }
+    } catch (err) {
+        _didIteratorError3 = true;
+        _iteratorError3 = err;
+    } finally {
         try {
-            for (var _iterator3 = Object.keys(observables)[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-                var k = _step3.value;
-
-                out[k] = observables[k]();
+            if (!_iteratorNormalCompletion3 && _iterator3.return) {
+                _iterator3.return();
             }
-        } catch (err) {
-            _didIteratorError3 = true;
-            _iteratorError3 = err;
         } finally {
-            try {
-                if (!_iteratorNormalCompletion3 && _iterator3.return) {
-                    _iterator3.return();
-                }
-            } finally {
-                if (_didIteratorError3) {
-                    throw _iteratorError3;
-                }
+            if (_didIteratorError3) {
+                throw _iteratorError3;
             }
         }
-
-        return out;
     }
-};
 
-},{}],3:[function(require,module,exports){
+    var _iteratorNormalCompletion4 = true;
+    var _didIteratorError4 = false;
+    var _iteratorError4 = undefined;
+
+    try {
+        for (var _iterator4 = GM_listValues()[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+            var _k = _step4.value;
+
+            gm[_k] = GM_getValue(_k);
+        }
+    } catch (err) {
+        _didIteratorError4 = true;
+        _iteratorError4 = err;
+    } finally {
+        try {
+            if (!_iteratorNormalCompletion4 && _iterator4.return) {
+                _iterator4.return();
+            }
+        } finally {
+            if (_didIteratorError4) {
+                throw _iteratorError4;
+            }
+        }
+    }
+
+    console.debug({
+        observables: ob,
+        storage: gm
+    });
+    toast('See the console');
+});
+
+},{"./gm-observable":3,"./toast":17}],5:[function(require,module,exports){
 'use strict';
 
 var sfx = require('./sfx').notification;
@@ -185,7 +277,7 @@ module.exports = function (msg, options) {
     }
 };
 
-},{"./sfx":9}],4:[function(require,module,exports){
+},{"./sfx":12}],6:[function(require,module,exports){
 'use strict';
 
 var node = document.querySelector(".attrib_value.ap_data");
@@ -200,7 +292,7 @@ new MutationObserver(function () {
     }
 }).observe(node, require('./settings.json'));
 
-},{"../model":2,"../x-out-of-y":15,"./settings.json":8}],5:[function(require,module,exports){
+},{"../model":4,"../x-out-of-y":18,"./settings.json":10}],7:[function(require,module,exports){
 'use strict';
 
 var node = document.querySelector(".timer_plaque");
@@ -211,7 +303,7 @@ new MutationObserver(function () {
     model(isNaN(text) ? text : parseFloat(text));
 }).observe(node, require('./settings.json'));
 
-},{"../model":2,"./settings.json":8}],6:[function(require,module,exports){
+},{"../model":4,"./settings.json":10}],8:[function(require,module,exports){
 "use strict";
 
 var $node = $(".PopupCaptcha");
@@ -221,7 +313,7 @@ new MutationObserver(function () {
     model($node.is(":visible"));
 }).observe($node[0], require('./settings.json'));
 
-},{"../model":2,"./settings.json":8}],7:[function(require,module,exports){
+},{"../model":4,"./settings.json":10}],9:[function(require,module,exports){
 'use strict';
 
 var node = document.querySelector('.attrib_name[title="Hit Points"]').nextElementSibling;
@@ -236,14 +328,56 @@ new MutationObserver(function () {
     }
 }).observe(node, require('./settings.json'));
 
-},{"../model":2,"../x-out-of-y":15,"./settings.json":8}],8:[function(require,module,exports){
+},{"../model":4,"../x-out-of-y":18,"./settings.json":10}],10:[function(require,module,exports){
 module.exports={
   "childList": true,
   "characterData": true,
   "attributes": true,
   "subtree": true
 }
-},{}],9:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
+'use strict';
+
+var model = require('./model').model;
+
+var createNotificationClick = function createNotificationClick() {
+    var key = $(this).attr("data-key");
+    model[key](!model[key]());
+};
+
+var createNotificationBtn = function createNotificationBtn(key, label) {
+    return $('<button/>').attr({
+        type: 'button',
+        'class': 'btn',
+        'data-bind': 'css: {\'btn-danger\': !' + key + '(), \'btn-success\': ' + key + '}',
+        'data-key': key
+    }).click(createNotificationClick).append($('<span>' + label + ': </span>'), $('<span data-bind="text: ' + key + '() ? \'Enabled\' : \'Disabled\'"/>'));
+};
+
+var $modalWrapper = $('<div data-remodal-id="' + GM_info.script.name + '"><button data-remodal-action="close" class="remodal-close"></button></div>');
+
+var modalInnerContainer = document.createElement('div');
+$modalWrapper.append(modalInnerContainer);
+
+var shadow = modalInnerContainer.createShadowRoot();
+var root = $('<div class="container-fluid text-left"/>')[0];
+
+shadow.appendChild($('<style>' + ['bs_css1', 'bs_css2'].map(GM_getResourceText).reduce(function (acc, curr) {
+    return acc + curr;
+}) + '</style>')[0]);
+shadow.appendChild(root);
+
+$(root).append('<h1 class="text-center">' + GM_info.script.name + ' v' + GM_info.script.version + '</h1>', '<h3>Notification toggles</h3>', $('<div class="btn-group btn-group-xs">').append(createNotificationBtn('notify_captcha', 'Captcha'), createNotificationBtn('notify_AP', 'Full AP'), createNotificationBtn('notify_HP', 'Full HP'), createNotificationBtn('notify_timer', 'Idle')));
+
+var $modal = $modalWrapper.remodal({ hashTracking: false });
+
+$("#Left_menu").find(">.LeftMenu.LeftMenuLinks.side_block").prepend('<div class="smallchain"/>', $('<div class="toggle" style="text-align:center"><a href="javascript:void(0)">' + GM_info.script.name + ' options</a></div>').click(function () {
+    $modal.open();
+}));
+
+ko.applyBindings(model, root);
+
+},{"./model":4}],12:[function(require,module,exports){
 "use strict";
 
 var notification = new buzz.sound("https://cdn.rawgit.com/AlorelUserscripts/battered-shield-notifier/3cad641d61497ba25be33ae9db0ef30742628452/assets/notification.mp3", {
@@ -254,7 +388,7 @@ var notification = new buzz.sound("https://cdn.rawgit.com/AlorelUserscripts/batt
 
 module.exports = { notification: notification };
 
-},{}],10:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 'use strict';
 
 var auraBtn = document.querySelector('#Left_menu a[href="javascript:PopupHandler.Popup(\'Cast\');"] div[data-selector]') || document.createElement("span");
@@ -264,55 +398,54 @@ var options = {
     }
 };
 var notify = require('../notify');
+var model = require('../model').model;
 
-require('../model').model.apPCT.subscribe(function (v) {
-    if (v >= 100.0) {
+model.apPCT.subscribe(function (v) {
+    if (v >= 100.0 && model.notify_AP()) {
         notify('AP full!', options);
     }
 });
 
-},{"../model":2,"../notify":3}],11:[function(require,module,exports){
+},{"../model":4,"../notify":5}],14:[function(require,module,exports){
 'use strict';
 
 var stopped = 'Stopped';
 var notify = require('../notify');
+var model = require('../model').model;
 
-require('../model').model.timer.subscribe(function (v) {
-    if (stopped === v) {
+model.timer.subscribe(function (v) {
+    if (stopped == v && model.notify_timer()) {
         notify('Actions finished: ' + v);
     }
 });
 
-},{"../model":2,"../notify":3}],12:[function(require,module,exports){
+},{"../model":4,"../notify":5}],15:[function(require,module,exports){
 'use strict';
 
 var notify = require('../notify');
 var options = { timeout: 3600000 };
+var model = require('../model').model;
 
-require('../model').model.captcha.subscribe(function (visible) {
-    if (visible) {
+model.captcha.subscribe(function (visible) {
+    if (visible && model.notify_captcha()) {
         notify('Captcha!', options);
     }
 });
 
-},{"../model":2,"../notify":3}],13:[function(require,module,exports){
+},{"../model":4,"../notify":5}],16:[function(require,module,exports){
 'use strict';
 
 var notify = require('../notify');
+var model = require('../model').model;
 
-require('../model').model.hpPCT.subscribe(function (v) {
-    if (v >= 100.0) {
+model.hpPCT.subscribe(function (v) {
+    if (v >= 100.0 && model.notify_HP()) {
         notify('HP full!');
     }
 });
 
-},{"../model":2,"../notify":3}],14:[function(require,module,exports){
+},{"../model":4,"../notify":5}],17:[function(require,module,exports){
 'use strict';
-
-var css = document.createElement('style');
-css.textContent = GM_getResourceText('toast_css');
-
-document.body.appendChild(css);
 
 var baseCfg = {
     showHideTransition: 'fade', // fade, slide or plain
@@ -331,7 +464,7 @@ module.exports = function (msg, cfg) {
     $.toast($.extend({ text: msg }, baseCfg, cfg || {}));
 };
 
-},{}],15:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 "use strict";
 
 module.exports = /([0-9\.]+)\s*\/\s*([0-9\.]+)/;

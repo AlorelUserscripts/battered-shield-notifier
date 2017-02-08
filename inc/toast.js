@@ -1,8 +1,3 @@
-const css = document.createElement('style');
-css.textContent = GM_getResourceText('toast_css');
-
-document.body.appendChild(css);
-
 const baseCfg = {
     showHideTransition: 'fade', // fade, slide or plain
     allowToastClose: true, // Boolean value true or false

@@ -3,9 +3,6 @@
   "version": "1.0.0",
   "description": "Tested in Tampermonkey (Chrome). Won't test on Firefox.",
   "main": "battered-shield-helper.user.js",
-  "scripts": {
-    "precommit": "node build.js"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/AlorelUserscripts/battered-shield-notifier.git"
@@ -17,7 +14,10 @@
   },
   "homepage": "https://github.com/AlorelUserscripts/battered-shield-notifier#readme",
   "devDependencies": {
-    "husky": "^0.13.1",
-    "userscript-utils": "^1.0.1"
+    "babel-core": "^6.22",
+    "babel-preset-latest": "^6.22",
+    "babelify": "^7.3",
+    "browserify": "^14.0",
+    "userscript-utils": "^1.0"
   }
 }

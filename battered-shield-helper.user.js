@@ -189,7 +189,6 @@ module.exports = {
     },
     ready: {
         skillLevels: require('./get-levels')().then(function (levels) {
-            var mx = module.exports;
             var _iteratorNormalCompletion = true;
             var _didIteratorError = false;
             var _iteratorError = undefined;
@@ -201,12 +200,12 @@ module.exports = {
                     var lvl = ko.observable(levels[skill]),
                         notifyAt = gmo.integer('notify_at_lvl_' + skill, 0);
 
-                    mx['lvl_' + skill] = lvl;
-                    mx['notify_at_lvl_' + skill] = notifyAt;
-                    mx['lvl_should_notify_' + skill] = ko.pureComputed(function () {
+                    observables['lvl_' + skill] = lvl;
+                    observables['notify_at_lvl_' + skill] = notifyAt;
+                    observables['lvl_should_notify_' + skill] = ko.pureComputed(function () {
                         return notifyAt() > 0 && lvl() >= notifyAt();
                     });
-                    mx['lvl_should_notify_' + skill + '_text'] = ko.pureComputed(function () {
+                    observables['lvl_should_notify_' + skill + '_text'] = ko.pureComputed(function () {
                         if (notifyAt() < 1) {
                             return 'Disabled';
                         } else if (notifyAt() <= lvl()) {
@@ -215,7 +214,7 @@ module.exports = {
                             return notifyAt() - lvl() + ' to go!';
                         }
                     });
-                    mx['lvl_should_notify_' + skill + '_class'] = ko.pureComputed(function () {
+                    observables['lvl_should_notify_' + skill + '_class'] = ko.pureComputed(function () {
                         if (notifyAt() < 1) {
                             return 'active text-muted';
                         } else if (notifyAt() <= lvl()) {
@@ -397,10 +396,17 @@ model.ready.skillLevels.then(function () {
     var settings = require('./settings.json');
 
     var mo = new MutationObserver(function () {
-        m["lvl_" + $skill.textContent.trim().toLowerCase()](parseInt($level.textContent.trim()));
+        if ($level && $skill) {
+            var level = $level.textContent;
+            var skill = $skill.textContent;
+
+            if (level && skill) {
+                m["lvl_" + skill.trim().toLowerCase()](parseInt(level.trim()));
+            }
+        }
     });
 
-    mo.observe($level, settings);
+    mo.observe($level.parentNode, settings);
     console.debug('Skill level observer initialised');
 });
 

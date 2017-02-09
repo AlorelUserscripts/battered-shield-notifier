@@ -23,15 +23,14 @@ module.exports = {
     },
     ready: {
         skillLevels: require('./get-levels')().then(levels => {
-            const mx = module.exports;
             for (let skill of Object.keys(levels)) {
                 let lvl = ko.observable(levels[skill]),
                     notifyAt = gmo.integer(`notify_at_lvl_${skill}`, 0);
 
-                mx[`lvl_${skill}`] = lvl;
-                mx[`notify_at_lvl_${skill}`] = notifyAt;
-                mx[`lvl_should_notify_${skill}`] = ko.pureComputed(() => notifyAt() > 0 && lvl() >= notifyAt());
-                mx[`lvl_should_notify_${skill}_text`] = ko.pureComputed(() => {
+                observables[`lvl_${skill}`] = lvl;
+                observables[`notify_at_lvl_${skill}`] = notifyAt;
+                observables[`lvl_should_notify_${skill}`] = ko.pureComputed(() => notifyAt() > 0 && lvl() >= notifyAt());
+                observables[`lvl_should_notify_${skill}_text`] = ko.pureComputed(() => {
                     if (notifyAt() < 1) {
                         return 'Disabled';
                     } else if (notifyAt() <= lvl()) {
@@ -40,7 +39,7 @@ module.exports = {
                         return `${notifyAt() - lvl()} to go!`;
                     }
                 });
-                mx[`lvl_should_notify_${skill}_class`] = ko.pureComputed(() => {
+                observables[`lvl_should_notify_${skill}_class`] = ko.pureComputed(() => {
                     if (notifyAt() < 1) {
                         return 'active text-muted';
                     } else if (notifyAt() <= lvl()) {

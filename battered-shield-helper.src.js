@@ -40,15 +40,24 @@
 // @resource bs_css2 https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css
 // ==/UserScript==
 
+require('./inc/debugify-gm');
+String.prototype.ucFirst = function () {
+    return this.charAt(0).toUpperCase() + this.slice(1);
+};
+
 $(document).one('DOMContentLoaded', () => {
-    $(`<style>${['remodal_css1', 'remodal_css2', 'toast_css'].map(GM_getResourceText).reduce((acc, curr) => acc + curr)}</style>`)
-        .append('.remodal-overlay,.remodal-wrapper{z-index:100000}')
-        .appendTo(document.body);
+    ['remodal_css1', 'remodal_css2', 'toast_css']
+        .map(GM_getResourceText)
+        .map(c => $(`<style>${c}</style>`)[0])
+        .forEach(c => document.body.appendChild(c));
+
+    $('<style>.remodal-overlay,.remodal-wrapper{z-index:100000}</style>').appendTo(document.body);
 
     require('./inc/observers/action-point');
     require('./inc/observers/action-timer');
     require('./inc/observers/captcha');
     require('./inc/observers/hp');
+    require('./inc/observers/skill-levels');
 
     require('./inc/subscriptions/action-points');
     require('./inc/subscriptions/actions-finished');
@@ -59,5 +68,3 @@ $(document).one('DOMContentLoaded', () => {
 
     require('./inc/toast')(`${GM_info.script.name} v${GM_info.script.version} loaded.`);
 });
-
-require('./inc/debugify-gm');

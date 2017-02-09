@@ -18,41 +18,52 @@ let observables = {
     notify_timer: gmo.boolean('notify_timer', true)
 };
 
-let addListeners = [];
-
 for (let k of Object.keys(observables)) {
     observables[k].subscribe(debug, k);
 }
-
-require('./get-levels')().then(levels => {
-    for (let k of Object.keys(levels)) {
-        module.exports.add(`lvl_${k}`, ko.observable(levels[k]));
-    }
-    require('./observers/skill-levels');
-});
 
 module.exports = {
     add: (name, value) => {
         observables[name] = value;
         value.subscribe(debug, name);
 
-        if (addListeners.length) {
-            for (let listener of addListeners) {
-                listener(name, value);
-            }
-        }
-
         return module.exports;
     },
     get model() {
         return observables;
     },
-    addListener: listener => {
-        if (typeof listener === "function") {
-            addListeners.push(listener);
-        } else {
-            throw new TypeError("Listener must be a function");
-        }
+    ready: {
+        skillLevels: require('./get-levels')().then(levels => {
+            const mx = module.exports;
+            for (let skill of Object.keys(levels)) {
+                let lvl = ko.observable(levels[skill]),
+                    notifyAt = gmo.integer(`notify_at_lvl_${skill}`, 0);
+
+                mx.add(`lvl_${skill}`, lvl);
+                mx.add(`notify_at_lvl_${skill}`, notifyAt);
+                mx.add(`lvl_should_notify_${skill}`, ko.pureComputed(() => notifyAt() > 0 && lvl() >= notifyAt()));
+                mx.add(`lvl_should_notify_${skill}_text`, ko.pureComputed(() => {
+                    if (notifyAt() < 1) {
+                        return 'Disabled';
+                    } else if (notifyAt() <= lvl()) {
+                        return 'Reached';
+                    } else {
+                        return `${notifyAt() - lvl()} to go!`;
+                    }
+                }));
+                mx.add(`lvl_should_notify_${skill}_class`, ko.pureComputed(() => {
+                    if (notifyAt() < 1) {
+                        return 'active text-muted';
+                    } else if (notifyAt() <= lvl()) {
+                        return 'success text-success';
+                    } else {
+                        return `info text-primary`;
+                    }
+                }));
+            }
+
+            return levels;
+        })
     }
 };
 

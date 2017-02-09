@@ -4,7 +4,7 @@ const map = function () {
     const self = $(this);
 
     return {
-        name: self.find(">.name>span").text().trim(),
+        name: self.find(">.name>span").text().trim().toLowerCase(),
         level: parseInt(self.find(">.level>.Level").text().trim())
     };
 };

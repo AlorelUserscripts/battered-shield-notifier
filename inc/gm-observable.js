@@ -1,6 +1,9 @@
-const string = (key, def) => {
-    const r = ko.observable(GM_getValue(key, def || ""));
-    r.subscribe(v => GM_setValue(key, v));
+const integer = (key, def) => {
+    // getvalue may return key which is an empty string
+    // check for def, see if it's set
+    // if all else fails, return 0
+    const r = ko.observable(parseInt(GM_getValue(key, def) || def || 0));
+    r.subscribe(v => GM_setValue(key, parseInt(v)));
     return r;
 };
 const boolean = (key, def) => {
@@ -9,4 +12,4 @@ const boolean = (key, def) => {
     return r;
 };
 
-module.exports = {string, boolean};
+module.exports = {integer, boolean};

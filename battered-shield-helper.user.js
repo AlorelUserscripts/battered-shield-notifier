@@ -43,15 +43,25 @@
 // @resource bs_css2 https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css
 // ==/UserScript==
 
+require('./inc/debugify-gm');
+String.prototype.ucFirst = function () {
+    return this.charAt(0).toUpperCase() + this.slice(1);
+};
+
 $(document).one('DOMContentLoaded', function () {
-    $('<style>' + ['remodal_css1', 'remodal_css2', 'toast_css'].map(GM_getResourceText).reduce(function (acc, curr) {
-        return acc + curr;
-    }) + '</style>').append('.remodal-overlay,.remodal-wrapper{z-index:100000}').appendTo(document.body);
+    ['remodal_css1', 'remodal_css2', 'toast_css'].map(GM_getResourceText).map(function (c) {
+        return $('<style>' + c + '</style>')[0];
+    }).forEach(function (c) {
+        return document.body.appendChild(c);
+    });
+
+    $('<style>.remodal-overlay,.remodal-wrapper{z-index:100000}</style>').appendTo(document.body);
 
     require('./inc/observers/action-point');
     require('./inc/observers/action-timer');
     require('./inc/observers/captcha');
     require('./inc/observers/hp');
+    require('./inc/observers/skill-levels');
 
     require('./inc/subscriptions/action-points');
     require('./inc/subscriptions/actions-finished');
@@ -63,9 +73,7 @@ $(document).one('DOMContentLoaded', function () {
     require('./inc/toast')(GM_info.script.name + ' v' + GM_info.script.version + ' loaded.');
 });
 
-require('./inc/debugify-gm');
-
-},{"./inc/debugify-gm":2,"./inc/observers/action-point":7,"./inc/observers/action-timer":8,"./inc/observers/captcha":9,"./inc/observers/hp":10,"./inc/register-menu":13,"./inc/subscriptions/action-points":15,"./inc/subscriptions/actions-finished":16,"./inc/subscriptions/captcha":17,"./inc/subscriptions/full-health":18,"./inc/toast":19}],2:[function(require,module,exports){
+},{"./inc/debugify-gm":2,"./inc/observers/action-point":7,"./inc/observers/action-timer":8,"./inc/observers/captcha":9,"./inc/observers/hp":10,"./inc/observers/skill-levels":12,"./inc/register-menu":13,"./inc/subscriptions/action-points":15,"./inc/subscriptions/actions-finished":16,"./inc/subscriptions/captcha":17,"./inc/subscriptions/full-health":18,"./inc/toast":19}],2:[function(require,module,exports){
 'use strict';
 
 var orig = {
@@ -94,7 +102,7 @@ var map = function map() {
     var self = $(this);
 
     return {
-        name: self.find(">.name>span").text().trim(),
+        name: self.find(">.name>span").text().trim().toLowerCase(),
         level: parseInt(self.find(">.level>.Level").text().trim())
     };
 };
@@ -132,10 +140,13 @@ module.exports.ready = ready;
 },{}],4:[function(require,module,exports){
 "use strict";
 
-var string = function string(key, def) {
-    var r = ko.observable(GM_getValue(key, def || ""));
+var integer = function integer(key, def) {
+    // getvalue may return key which is an empty string
+    // check for def, see if it's set
+    // if all else fails, return 0
+    var r = ko.observable(parseInt(GM_getValue(key, def) || def || 0));
     r.subscribe(function (v) {
-        return GM_setValue(key, v);
+        return GM_setValue(key, parseInt(v));
     });
     return r;
 };
@@ -147,7 +158,7 @@ var boolean = function boolean(key, def) {
     return r;
 };
 
-module.exports = { string: string, boolean: boolean };
+module.exports = { integer: integer, boolean: boolean };
 
 },{}],5:[function(require,module,exports){
 'use strict';
@@ -171,8 +182,6 @@ var observables = {
     notify_captcha: gmo.boolean('notify_captcha', true),
     notify_timer: gmo.boolean('notify_timer', true)
 };
-
-var addListeners = [];
 
 var _iteratorNormalCompletion = true;
 var _didIteratorError = false;
@@ -199,78 +208,75 @@ try {
     }
 }
 
-require('./get-levels')().then(function (levels) {
-    var _iteratorNormalCompletion2 = true;
-    var _didIteratorError2 = false;
-    var _iteratorError2 = undefined;
-
-    try {
-        for (var _iterator2 = Object.keys(levels)[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-            var k = _step2.value;
-
-            module.exports.add('lvl_' + k, ko.observable(levels[k]));
-        }
-    } catch (err) {
-        _didIteratorError2 = true;
-        _iteratorError2 = err;
-    } finally {
-        try {
-            if (!_iteratorNormalCompletion2 && _iterator2.return) {
-                _iterator2.return();
-            }
-        } finally {
-            if (_didIteratorError2) {
-                throw _iteratorError2;
-            }
-        }
-    }
-
-    require('./observers/skill-levels');
-});
-
 module.exports = {
     add: function add(name, value) {
         observables[name] = value;
         value.subscribe(debug, name);
-
-        if (addListeners.length) {
-            var _iteratorNormalCompletion3 = true;
-            var _didIteratorError3 = false;
-            var _iteratorError3 = undefined;
-
-            try {
-                for (var _iterator3 = addListeners[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-                    var listener = _step3.value;
-
-                    listener(name, value);
-                }
-            } catch (err) {
-                _didIteratorError3 = true;
-                _iteratorError3 = err;
-            } finally {
-                try {
-                    if (!_iteratorNormalCompletion3 && _iterator3.return) {
-                        _iterator3.return();
-                    }
-                } finally {
-                    if (_didIteratorError3) {
-                        throw _iteratorError3;
-                    }
-                }
-            }
-        }
 
         return module.exports;
     },
     get model() {
         return observables;
     },
-    addListener: function addListener(listener) {
-        if (typeof listener === "function") {
-            addListeners.push(listener);
-        } else {
-            throw new TypeError("Listener must be a function");
-        }
+    ready: {
+        skillLevels: require('./get-levels')().then(function (levels) {
+            var mx = module.exports;
+            var _iteratorNormalCompletion2 = true;
+            var _didIteratorError2 = false;
+            var _iteratorError2 = undefined;
+
+            try {
+                var _loop = function _loop() {
+                    var skill = _step2.value;
+
+                    var lvl = ko.observable(levels[skill]),
+                        notifyAt = gmo.integer('notify_at_lvl_' + skill, 0);
+
+                    mx.add('lvl_' + skill, lvl);
+                    mx.add('notify_at_lvl_' + skill, notifyAt);
+                    mx.add('lvl_should_notify_' + skill, ko.pureComputed(function () {
+                        return notifyAt() > 0 && lvl() >= notifyAt();
+                    }));
+                    mx.add('lvl_should_notify_' + skill + '_text', ko.pureComputed(function () {
+                        if (notifyAt() < 1) {
+                            return 'Disabled';
+                        } else if (notifyAt() <= lvl()) {
+                            return 'Reached';
+                        } else {
+                            return notifyAt() - lvl() + ' to go!';
+                        }
+                    }));
+                    mx.add('lvl_should_notify_' + skill + '_class', ko.pureComputed(function () {
+                        if (notifyAt() < 1) {
+                            return 'active text-muted';
+                        } else if (notifyAt() <= lvl()) {
+                            return 'success text-success';
+                        } else {
+                            return 'info text-primary';
+                        }
+                    }));
+                };
+
+                for (var _iterator2 = Object.keys(levels)[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+                    _loop();
+                }
+            } catch (err) {
+                _didIteratorError2 = true;
+                _iteratorError2 = err;
+            } finally {
+                try {
+                    if (!_iteratorNormalCompletion2 && _iterator2.return) {
+                        _iterator2.return();
+                    }
+                } finally {
+                    if (_didIteratorError2) {
+                        throw _iteratorError2;
+                    }
+                }
+            }
+
+            return levels;
+        })
     }
 };
 
@@ -278,15 +284,40 @@ GM_registerMenuCommand('Debug ' + GM_info.script.name, function () {
     var ob = {},
         gm = {};
 
+    var _iteratorNormalCompletion3 = true;
+    var _didIteratorError3 = false;
+    var _iteratorError3 = undefined;
+
+    try {
+        for (var _iterator3 = Object.keys(observables)[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+            var k = _step3.value;
+
+            ob[k] = observables[k]();
+        }
+    } catch (err) {
+        _didIteratorError3 = true;
+        _iteratorError3 = err;
+    } finally {
+        try {
+            if (!_iteratorNormalCompletion3 && _iterator3.return) {
+                _iterator3.return();
+            }
+        } finally {
+            if (_didIteratorError3) {
+                throw _iteratorError3;
+            }
+        }
+    }
+
     var _iteratorNormalCompletion4 = true;
     var _didIteratorError4 = false;
     var _iteratorError4 = undefined;
 
     try {
-        for (var _iterator4 = Object.keys(observables)[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-            var k = _step4.value;
+        for (var _iterator4 = GM_listValues()[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+            var _k = _step4.value;
 
-            ob[k] = observables[k]();
+            gm[_k] = GM_getValue(_k);
         }
     } catch (err) {
         _didIteratorError4 = true;
@@ -303,31 +334,6 @@ GM_registerMenuCommand('Debug ' + GM_info.script.name, function () {
         }
     }
 
-    var _iteratorNormalCompletion5 = true;
-    var _didIteratorError5 = false;
-    var _iteratorError5 = undefined;
-
-    try {
-        for (var _iterator5 = GM_listValues()[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
-            var _k = _step5.value;
-
-            gm[_k] = GM_getValue(_k);
-        }
-    } catch (err) {
-        _didIteratorError5 = true;
-        _iteratorError5 = err;
-    } finally {
-        try {
-            if (!_iteratorNormalCompletion5 && _iterator5.return) {
-                _iterator5.return();
-            }
-        } finally {
-            if (_didIteratorError5) {
-                throw _iteratorError5;
-            }
-        }
-    }
-
     console.debug({
         observables: ob,
         storage: gm
@@ -335,7 +341,7 @@ GM_registerMenuCommand('Debug ' + GM_info.script.name, function () {
     toast('See the console');
 });
 
-},{"./get-levels":3,"./gm-observable":4,"./observers/skill-levels":12,"./toast":19}],6:[function(require,module,exports){
+},{"./get-levels":3,"./gm-observable":4,"./toast":19}],6:[function(require,module,exports){
 'use strict';
 
 var sfx = require('./sfx').notification;
@@ -413,9 +419,10 @@ module.exports={
 'use strict';
 
 var getLevels = require('../get-levels');
-var model = require('../model').model;
+var model = require('../model');
 
 var then = function then(levels) {
+    var m = model.model;
     var _iteratorNormalCompletion = true;
     var _didIteratorError = false;
     var _iteratorError = undefined;
@@ -424,7 +431,7 @@ var then = function then(levels) {
         for (var _iterator = Object.keys(levels)[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
             var k = _step.value;
 
-            model['lvl_' + k](levels[k]);
+            m['lvl_' + k](levels[k]);
         }
     } catch (err) {
         _didIteratorError = true;
@@ -442,7 +449,7 @@ var then = function then(levels) {
     }
 };
 
-getLevels.ready.then(function () {
+model.ready.skillLevels.then(function () {
     console.debug('Skill level observer initialised');
     new MutationObserver(function () {
         return getLevels().then(then);
@@ -452,11 +459,11 @@ getLevels.ready.then(function () {
 },{"../get-levels":3,"../model":5,"./settings.json":11}],13:[function(require,module,exports){
 'use strict';
 
-var model = require('./model').model;
+var model = require('./model');
 
 var createNotificationClick = function createNotificationClick() {
     var key = $(this).attr("data-key");
-    model[key](!model[key]());
+    model.model[key](!model.model[key]());
 };
 
 var createNotificationBtn = function createNotificationBtn(key, label) {
@@ -476,12 +483,56 @@ $modalWrapper.append(modalInnerContainer);
 var shadow = modalInnerContainer.createShadowRoot();
 var root = $('<div class="container-fluid text-left"/>')[0];
 
-shadow.appendChild($('<style>' + ['bs_css1', 'bs_css2'].map(GM_getResourceText).reduce(function (acc, curr) {
-    return acc + curr;
-}) + '</style>')[0]);
+['bs_css1', 'bs_css2'].map(GM_getResourceText).map(function (c) {
+    return '<style>' + c + '</style>';
+}).forEach(function (c) {
+    return shadow.appendChild($(c)[0]);
+});
+
+shadow.appendChild($('<style>.vertical-middle td{vertical-align:middle!important}</style>')[0]);
 shadow.appendChild(root);
 
-$(root).append('<h1 class="text-center">' + GM_info.script.name + ' v' + GM_info.script.version + '</h1>', '<h3>Notification toggles</h3>', $('<div class="btn-group btn-group-xs">').append(createNotificationBtn('notify_captcha', 'Captcha'), createNotificationBtn('notify_AP', 'Full AP'), createNotificationBtn('notify_HP', 'Full HP'), createNotificationBtn('notify_timer', 'Idle')));
+var $skillLevelContainer = $('<tbody/>');
+
+model.ready.skillLevels.then(function (levels) {
+    var i = 0;
+    var _iteratorNormalCompletion = true;
+    var _didIteratorError = false;
+    var _iteratorError = undefined;
+
+    try {
+        for (var _iterator = Object.keys(levels).sort()[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+            var name = _step.value;
+
+            $skillLevelContainer.append($('<tr data-bind="css:lvl_should_notify_' + name + '_class"/>').append('<td><label for="notify_at_lvl_' + i + '">' + name.ucFirst() + '</label></td>', $('<td/>').append($('<input/>').attr({
+                type: 'number',
+                id: 'notify_at_lvl_' + i,
+                min: 0,
+                style: 'width:85px',
+                'class': 'form-control input-sm',
+                'data-bind': 'textInput: notify_at_lvl_' + name
+            })), $('<td><span data-bind="text: lvl_should_notify_' + name + '_text"/></td>')));
+            ++i;
+        }
+    } catch (err) {
+        _didIteratorError = true;
+        _iteratorError = err;
+    } finally {
+        try {
+            if (!_iteratorNormalCompletion && _iterator.return) {
+                _iterator.return();
+            }
+        } finally {
+            if (_didIteratorError) {
+                throw _iteratorError;
+            }
+        }
+    }
+
+    ko.applyBindings(model.model, $skillLevelContainer[0]);
+});
+
+$(root).append('<h1 class="text-center">' + GM_info.script.name + ' v' + GM_info.script.version + '</h1>', '<h3>Notification toggles</h3>', $('<div class="btn-group btn-group-xs">').append(createNotificationBtn('notify_captcha', 'Captcha'), createNotificationBtn('notify_AP', 'Full AP'), createNotificationBtn('notify_HP', 'Full HP'), createNotificationBtn('notify_timer', 'Idle')), '<hr/>', $('<h3 title="Notifies you when you reach a given skill level. Set to 0 to disable">Level notifications</h3>'), $('<table class="table table-condensed vertical-middle" style="width:auto"/>').append($skillLevelContainer));
 
 var $modal = $modalWrapper.remodal({ hashTracking: false });
 
@@ -489,7 +540,7 @@ $("#Left_menu").find(">.LeftMenu.LeftMenuLinks.side_block").prepend('<div class=
     $modal.open();
 }));
 
-ko.applyBindings(model, root);
+ko.applyBindings(model.model, root);
 
 },{"./model":5}],14:[function(require,module,exports){
 "use strict";

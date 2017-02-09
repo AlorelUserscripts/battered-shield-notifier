@@ -1,18 +1,16 @@
-const getLevels = require('../get-levels');
 const model = require('../model');
 
-const then = levels => {
-    let m = model.model;
-    for (let k of Object.keys(levels)) {
-        m[`lvl_${k}`](levels[k]);
-    }
-};
-
 model.ready.skillLevels.then(() => {
+    const $tl = $("#mainContainer").find(".timer_line");
+    const m = model.model;
+    const $level = $tl.find(".Level")[0];
+    const $skill = $tl.find(".Skill")[0];
+    const settings = require('./settings.json');
+
+    const mo = new MutationObserver(() => {
+        m[`lvl_${$skill.textContent.trim().toLowerCase()}`](parseInt($level.textContent.trim()));
+    });
+
+    mo.observe($level, settings);
     console.debug('Skill level observer initialised');
-    new MutationObserver(() => getLevels().then(then))
-        .observe(
-            $("#Profile_Tabs").find(".SkillHolder")[0],
-            require('./settings.json')
-        );
 });

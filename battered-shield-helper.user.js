@@ -33,6 +33,7 @@
 // @require      https://raw.githubusercontent.com/AlorelUserscripts/battered-shield-notifier/0242848a5d5c34368d81582051dd051b6a11ee70/lib/knockout.min.js
 // @require      https://raw.githubusercontent.com/AlorelUserscripts/battered-shield-notifier/44d6524c94a9fd58a1c8c63909debbbcbe00ba8d/lib/jquery.toast.min.js
 // @require      https://raw.githubusercontent.com/AlorelUserscripts/battered-shield-notifier/122625d19ee42648bf181dd20715c4fd349c273e/lib/bluebird.min.js
+// @require      https://raw.githubusercontent.com/AlorelUserscripts/battered-shield-notifier/1643a4cf77c8c90a27930f8b868c237720d4053c/inc/run-before-main.js
 
 // @require  https://raw.githubusercontent.com/AlorelUserscripts/battered-shield-notifier/63cb7a7b1087226c1e138c687dc58f2b9f9f531e/lib/remodal.min.js
 //
@@ -163,12 +164,6 @@ module.exports = { integer: integer, boolean: boolean };
 },{}],5:[function(require,module,exports){
 'use strict';
 
-var debug = function debug(v) {
-    console.debug({
-        name: this.toString(),
-        value: v
-    });
-};
 var gmo = require('./gm-observable');
 var toast = require('./toast');
 
@@ -183,35 +178,9 @@ var observables = {
     notify_timer: gmo.boolean('notify_timer', true)
 };
 
-var _iteratorNormalCompletion = true;
-var _didIteratorError = false;
-var _iteratorError = undefined;
-
-try {
-    for (var _iterator = Object.keys(observables)[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-        var k = _step.value;
-
-        observables[k].subscribe(debug, k);
-    }
-} catch (err) {
-    _didIteratorError = true;
-    _iteratorError = err;
-} finally {
-    try {
-        if (!_iteratorNormalCompletion && _iterator.return) {
-            _iterator.return();
-        }
-    } finally {
-        if (_didIteratorError) {
-            throw _iteratorError;
-        }
-    }
-}
-
 module.exports = {
     add: function add(name, value) {
         observables[name] = value;
-        value.subscribe(debug, name);
 
         return module.exports;
     },
@@ -221,23 +190,23 @@ module.exports = {
     ready: {
         skillLevels: require('./get-levels')().then(function (levels) {
             var mx = module.exports;
-            var _iteratorNormalCompletion2 = true;
-            var _didIteratorError2 = false;
-            var _iteratorError2 = undefined;
+            var _iteratorNormalCompletion = true;
+            var _didIteratorError = false;
+            var _iteratorError = undefined;
 
             try {
                 var _loop = function _loop() {
-                    var skill = _step2.value;
+                    var skill = _step.value;
 
                     var lvl = ko.observable(levels[skill]),
                         notifyAt = gmo.integer('notify_at_lvl_' + skill, 0);
 
-                    mx.add('lvl_' + skill, lvl);
-                    mx.add('notify_at_lvl_' + skill, notifyAt);
-                    mx.add('lvl_should_notify_' + skill, ko.pureComputed(function () {
+                    mx['lvl_' + skill] = lvl;
+                    mx['notify_at_lvl_' + skill] = notifyAt;
+                    mx['lvl_should_notify_' + skill] = ko.pureComputed(function () {
                         return notifyAt() > 0 && lvl() >= notifyAt();
-                    }));
-                    mx.add('lvl_should_notify_' + skill + '_text', ko.pureComputed(function () {
+                    });
+                    mx['lvl_should_notify_' + skill + '_text'] = ko.pureComputed(function () {
                         if (notifyAt() < 1) {
                             return 'Disabled';
                         } else if (notifyAt() <= lvl()) {
@@ -245,8 +214,8 @@ module.exports = {
                         } else {
                             return notifyAt() - lvl() + ' to go!';
                         }
-                    }));
-                    mx.add('lvl_should_notify_' + skill + '_class', ko.pureComputed(function () {
+                    });
+                    mx['lvl_should_notify_' + skill + '_class'] = ko.pureComputed(function () {
                         if (notifyAt() < 1) {
                             return 'active text-muted';
                         } else if (notifyAt() <= lvl()) {
@@ -254,23 +223,23 @@ module.exports = {
                         } else {
                             return 'info text-primary';
                         }
-                    }));
+                    });
                 };
 
-                for (var _iterator2 = Object.keys(levels)[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+                for (var _iterator = Object.keys(levels)[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
                     _loop();
                 }
             } catch (err) {
-                _didIteratorError2 = true;
-                _iteratorError2 = err;
+                _didIteratorError = true;
+                _iteratorError = err;
             } finally {
                 try {
-                    if (!_iteratorNormalCompletion2 && _iterator2.return) {
-                        _iterator2.return();
+                    if (!_iteratorNormalCompletion && _iterator.return) {
+                        _iterator.return();
                     }
                 } finally {
-                    if (_didIteratorError2) {
-                        throw _iteratorError2;
+                    if (_didIteratorError) {
+                        throw _iteratorError;
                     }
                 }
             }
@@ -284,15 +253,40 @@ GM_registerMenuCommand('Debug ' + GM_info.script.name, function () {
     var ob = {},
         gm = {};
 
+    var _iteratorNormalCompletion2 = true;
+    var _didIteratorError2 = false;
+    var _iteratorError2 = undefined;
+
+    try {
+        for (var _iterator2 = Object.keys(observables)[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+            var k = _step2.value;
+
+            ob[k] = observables[k]();
+        }
+    } catch (err) {
+        _didIteratorError2 = true;
+        _iteratorError2 = err;
+    } finally {
+        try {
+            if (!_iteratorNormalCompletion2 && _iterator2.return) {
+                _iterator2.return();
+            }
+        } finally {
+            if (_didIteratorError2) {
+                throw _iteratorError2;
+            }
+        }
+    }
+
     var _iteratorNormalCompletion3 = true;
     var _didIteratorError3 = false;
     var _iteratorError3 = undefined;
 
     try {
-        for (var _iterator3 = Object.keys(observables)[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-            var k = _step3.value;
+        for (var _iterator3 = GM_listValues()[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+            var _k = _step3.value;
 
-            ob[k] = observables[k]();
+            gm[_k] = GM_getValue(_k);
         }
     } catch (err) {
         _didIteratorError3 = true;
@@ -305,31 +299,6 @@ GM_registerMenuCommand('Debug ' + GM_info.script.name, function () {
         } finally {
             if (_didIteratorError3) {
                 throw _iteratorError3;
-            }
-        }
-    }
-
-    var _iteratorNormalCompletion4 = true;
-    var _didIteratorError4 = false;
-    var _iteratorError4 = undefined;
-
-    try {
-        for (var _iterator4 = GM_listValues()[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-            var _k = _step4.value;
-
-            gm[_k] = GM_getValue(_k);
-        }
-    } catch (err) {
-        _didIteratorError4 = true;
-        _iteratorError4 = err;
-    } finally {
-        try {
-            if (!_iteratorNormalCompletion4 && _iterator4.return) {
-                _iterator4.return();
-            }
-        } finally {
-            if (_didIteratorError4) {
-                throw _iteratorError4;
             }
         }
     }
@@ -416,47 +385,26 @@ module.exports={
   "subtree": true
 }
 },{}],12:[function(require,module,exports){
-'use strict';
+"use strict";
 
-var getLevels = require('../get-levels');
 var model = require('../model');
 
-var then = function then(levels) {
-    var m = model.model;
-    var _iteratorNormalCompletion = true;
-    var _didIteratorError = false;
-    var _iteratorError = undefined;
-
-    try {
-        for (var _iterator = Object.keys(levels)[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-            var k = _step.value;
-
-            m['lvl_' + k](levels[k]);
-        }
-    } catch (err) {
-        _didIteratorError = true;
-        _iteratorError = err;
-    } finally {
-        try {
-            if (!_iteratorNormalCompletion && _iterator.return) {
-                _iterator.return();
-            }
-        } finally {
-            if (_didIteratorError) {
-                throw _iteratorError;
-            }
-        }
-    }
-};
-
 model.ready.skillLevels.then(function () {
+    var $tl = $("#mainContainer").find(".timer_line");
+    var m = model.model;
+    var $level = $tl.find(".Level")[0];
+    var $skill = $tl.find(".Skill")[0];
+    var settings = require('./settings.json');
+
+    var mo = new MutationObserver(function () {
+        m["lvl_" + $skill.textContent.trim().toLowerCase()](parseInt($level.textContent.trim()));
+    });
+
+    mo.observe($level, settings);
     console.debug('Skill level observer initialised');
-    new MutationObserver(function () {
-        return getLevels().then(then);
-    }).observe($("#Profile_Tabs").find(".SkillHolder")[0], require('./settings.json'));
 });
 
-},{"../get-levels":3,"../model":5,"./settings.json":11}],13:[function(require,module,exports){
+},{"../model":5,"./settings.json":11}],13:[function(require,module,exports){
 'use strict';
 
 var model = require('./model');

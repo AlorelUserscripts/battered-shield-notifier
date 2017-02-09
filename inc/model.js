@@ -1,9 +1,3 @@
-const debug = function (v) {
-    console.debug({
-        name: this.toString(),
-        value: v
-    });
-};
 const gmo = require('./gm-observable');
 const toast = require('./toast');
 
@@ -18,14 +12,9 @@ let observables = {
     notify_timer: gmo.boolean('notify_timer', true)
 };
 
-for (let k of Object.keys(observables)) {
-    observables[k].subscribe(debug, k);
-}
-
 module.exports = {
     add: (name, value) => {
         observables[name] = value;
-        value.subscribe(debug, name);
 
         return module.exports;
     },
@@ -39,10 +28,10 @@ module.exports = {
                 let lvl = ko.observable(levels[skill]),
                     notifyAt = gmo.integer(`notify_at_lvl_${skill}`, 0);
 
-                mx.add(`lvl_${skill}`, lvl);
-                mx.add(`notify_at_lvl_${skill}`, notifyAt);
-                mx.add(`lvl_should_notify_${skill}`, ko.pureComputed(() => notifyAt() > 0 && lvl() >= notifyAt()));
-                mx.add(`lvl_should_notify_${skill}_text`, ko.pureComputed(() => {
+                mx[`lvl_${skill}`] = lvl;
+                mx[`notify_at_lvl_${skill}`] = notifyAt;
+                mx[`lvl_should_notify_${skill}`] = ko.pureComputed(() => notifyAt() > 0 && lvl() >= notifyAt());
+                mx[`lvl_should_notify_${skill}_text`] = ko.pureComputed(() => {
                     if (notifyAt() < 1) {
                         return 'Disabled';
                     } else if (notifyAt() <= lvl()) {
@@ -50,8 +39,8 @@ module.exports = {
                     } else {
                         return `${notifyAt() - lvl()} to go!`;
                     }
-                }));
-                mx.add(`lvl_should_notify_${skill}_class`, ko.pureComputed(() => {
+                });
+                mx[`lvl_should_notify_${skill}_class`] = ko.pureComputed(() => {
                     if (notifyAt() < 1) {
                         return 'active text-muted';
                     } else if (notifyAt() <= lvl()) {
@@ -59,7 +48,7 @@ module.exports = {
                     } else {
                         return `info text-primary`;
                     }
-                }));
+                });
             }
 
             return levels;

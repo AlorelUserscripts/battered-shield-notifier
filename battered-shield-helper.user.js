@@ -32,6 +32,7 @@
 // @require      https://raw.githubusercontent.com/AlorelUserscripts/battered-shield-notifier/0242848a5d5c34368d81582051dd051b6a11ee70/lib/buzz.min.js
 // @require      https://raw.githubusercontent.com/AlorelUserscripts/battered-shield-notifier/0242848a5d5c34368d81582051dd051b6a11ee70/lib/knockout.min.js
 // @require      https://raw.githubusercontent.com/AlorelUserscripts/battered-shield-notifier/44d6524c94a9fd58a1c8c63909debbbcbe00ba8d/lib/jquery.toast.min.js
+// @require      https://raw.githubusercontent.com/AlorelUserscripts/battered-shield-notifier/122625d19ee42648bf181dd20715c4fd349c273e/lib/bluebird.min.js
 
 // @require  https://raw.githubusercontent.com/AlorelUserscripts/battered-shield-notifier/63cb7a7b1087226c1e138c687dc58f2b9f9f531e/lib/remodal.min.js
 //
@@ -64,7 +65,7 @@ $(document).one('DOMContentLoaded', function () {
 
 require('./inc/debugify-gm');
 
-},{"./inc/debugify-gm":2,"./inc/observers/action-point":6,"./inc/observers/action-timer":7,"./inc/observers/captcha":8,"./inc/observers/hp":9,"./inc/register-menu":11,"./inc/subscriptions/action-points":13,"./inc/subscriptions/actions-finished":14,"./inc/subscriptions/captcha":15,"./inc/subscriptions/full-health":16,"./inc/toast":17}],2:[function(require,module,exports){
+},{"./inc/debugify-gm":2,"./inc/observers/action-point":7,"./inc/observers/action-timer":8,"./inc/observers/captcha":9,"./inc/observers/hp":10,"./inc/register-menu":13,"./inc/subscriptions/action-points":15,"./inc/subscriptions/actions-finished":16,"./inc/subscriptions/captcha":17,"./inc/subscriptions/full-health":18,"./inc/toast":19}],2:[function(require,module,exports){
 'use strict';
 
 var orig = {
@@ -87,6 +88,50 @@ GM_getValue = function GM_getValue(key, defaultReturn) {
 },{}],3:[function(require,module,exports){
 "use strict";
 
+var $parent = $("#Profile_Tabs").find(".SkillHolder");
+
+var map = function map() {
+    var self = $(this);
+
+    return {
+        name: self.find(">.name>span").text().trim(),
+        level: parseInt(self.find(">.level>.Level").text().trim())
+    };
+};
+
+var reduce = function reduce(acc, curr) {
+    acc[curr.name] = curr.level;
+    return acc;
+};
+
+var findDivs = function findDivs() {
+    return $parent.find(">div");
+};
+
+console.time("Waiting for levels DOM");
+var ready = new Promise(function (resolve) {
+    var interval = setInterval(function () {
+        if (findDivs().length >= 12) {
+            console.timeEnd("Waiting for levels DOM");
+            clearInterval(interval);
+            resolve();
+        }
+    }, 25);
+});
+
+var then = function then() {
+    return $.makeArray($parent.find(">div").map(map)).reduce(reduce, {});
+};
+
+module.exports = function () {
+    return ready.then(then);
+};
+
+module.exports.ready = ready;
+
+},{}],4:[function(require,module,exports){
+"use strict";
+
 var string = function string(key, def) {
     var r = ko.observable(GM_getValue(key, def || ""));
     r.subscribe(function (v) {
@@ -104,7 +149,7 @@ var boolean = function boolean(key, def) {
 
 module.exports = { string: string, boolean: boolean };
 
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 'use strict';
 
 var debug = function debug(v) {
@@ -154,33 +199,62 @@ try {
     }
 }
 
+require('./get-levels')().then(function (levels) {
+    var _iteratorNormalCompletion2 = true;
+    var _didIteratorError2 = false;
+    var _iteratorError2 = undefined;
+
+    try {
+        for (var _iterator2 = Object.keys(levels)[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+            var k = _step2.value;
+
+            module.exports.add('lvl_' + k, ko.observable(levels[k]));
+        }
+    } catch (err) {
+        _didIteratorError2 = true;
+        _iteratorError2 = err;
+    } finally {
+        try {
+            if (!_iteratorNormalCompletion2 && _iterator2.return) {
+                _iterator2.return();
+            }
+        } finally {
+            if (_didIteratorError2) {
+                throw _iteratorError2;
+            }
+        }
+    }
+
+    require('./observers/skill-levels');
+});
+
 module.exports = {
     add: function add(name, value) {
         observables[name] = value;
         value.subscribe(debug, name);
 
         if (addListeners.length) {
-            var _iteratorNormalCompletion2 = true;
-            var _didIteratorError2 = false;
-            var _iteratorError2 = undefined;
+            var _iteratorNormalCompletion3 = true;
+            var _didIteratorError3 = false;
+            var _iteratorError3 = undefined;
 
             try {
-                for (var _iterator2 = addListeners[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-                    var listener = _step2.value;
+                for (var _iterator3 = addListeners[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+                    var listener = _step3.value;
 
                     listener(name, value);
                 }
             } catch (err) {
-                _didIteratorError2 = true;
-                _iteratorError2 = err;
+                _didIteratorError3 = true;
+                _iteratorError3 = err;
             } finally {
                 try {
-                    if (!_iteratorNormalCompletion2 && _iterator2.return) {
-                        _iterator2.return();
+                    if (!_iteratorNormalCompletion3 && _iterator3.return) {
+                        _iterator3.return();
                     }
                 } finally {
-                    if (_didIteratorError2) {
-                        throw _iteratorError2;
+                    if (_didIteratorError3) {
+                        throw _iteratorError3;
                     }
                 }
             }
@@ -204,40 +278,15 @@ GM_registerMenuCommand('Debug ' + GM_info.script.name, function () {
     var ob = {},
         gm = {};
 
-    var _iteratorNormalCompletion3 = true;
-    var _didIteratorError3 = false;
-    var _iteratorError3 = undefined;
-
-    try {
-        for (var _iterator3 = Object.keys(observables)[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-            var k = _step3.value;
-
-            ob[k] = observables[k]();
-        }
-    } catch (err) {
-        _didIteratorError3 = true;
-        _iteratorError3 = err;
-    } finally {
-        try {
-            if (!_iteratorNormalCompletion3 && _iterator3.return) {
-                _iterator3.return();
-            }
-        } finally {
-            if (_didIteratorError3) {
-                throw _iteratorError3;
-            }
-        }
-    }
-
     var _iteratorNormalCompletion4 = true;
     var _didIteratorError4 = false;
     var _iteratorError4 = undefined;
 
     try {
-        for (var _iterator4 = GM_listValues()[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-            var _k = _step4.value;
+        for (var _iterator4 = Object.keys(observables)[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+            var k = _step4.value;
 
-            gm[_k] = GM_getValue(_k);
+            ob[k] = observables[k]();
         }
     } catch (err) {
         _didIteratorError4 = true;
@@ -254,6 +303,31 @@ GM_registerMenuCommand('Debug ' + GM_info.script.name, function () {
         }
     }
 
+    var _iteratorNormalCompletion5 = true;
+    var _didIteratorError5 = false;
+    var _iteratorError5 = undefined;
+
+    try {
+        for (var _iterator5 = GM_listValues()[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+            var _k = _step5.value;
+
+            gm[_k] = GM_getValue(_k);
+        }
+    } catch (err) {
+        _didIteratorError5 = true;
+        _iteratorError5 = err;
+    } finally {
+        try {
+            if (!_iteratorNormalCompletion5 && _iterator5.return) {
+                _iterator5.return();
+            }
+        } finally {
+            if (_didIteratorError5) {
+                throw _iteratorError5;
+            }
+        }
+    }
+
     console.debug({
         observables: ob,
         storage: gm
@@ -261,7 +335,7 @@ GM_registerMenuCommand('Debug ' + GM_info.script.name, function () {
     toast('See the console');
 });
 
-},{"./gm-observable":3,"./toast":17}],5:[function(require,module,exports){
+},{"./get-levels":3,"./gm-observable":4,"./observers/skill-levels":12,"./toast":19}],6:[function(require,module,exports){
 'use strict';
 
 var sfx = require('./sfx').notification;
@@ -277,7 +351,7 @@ module.exports = function (msg, options) {
     }
 };
 
-},{"./sfx":12}],6:[function(require,module,exports){
+},{"./sfx":14}],7:[function(require,module,exports){
 'use strict';
 
 var node = document.querySelector(".attrib_value.ap_data");
@@ -292,7 +366,7 @@ new MutationObserver(function () {
     }
 }).observe(node, require('./settings.json'));
 
-},{"../model":4,"../x-out-of-y":18,"./settings.json":10}],7:[function(require,module,exports){
+},{"../model":5,"../x-out-of-y":20,"./settings.json":11}],8:[function(require,module,exports){
 'use strict';
 
 var node = document.querySelector(".timer_plaque");
@@ -303,7 +377,7 @@ new MutationObserver(function () {
     model(isNaN(text) ? text : parseFloat(text));
 }).observe(node, require('./settings.json'));
 
-},{"../model":4,"./settings.json":10}],8:[function(require,module,exports){
+},{"../model":5,"./settings.json":11}],9:[function(require,module,exports){
 "use strict";
 
 var $node = $(".PopupCaptcha");
@@ -313,7 +387,7 @@ new MutationObserver(function () {
     model($node.is(":visible"));
 }).observe($node[0], require('./settings.json'));
 
-},{"../model":4,"./settings.json":10}],9:[function(require,module,exports){
+},{"../model":5,"./settings.json":11}],10:[function(require,module,exports){
 'use strict';
 
 var node = document.querySelector('.attrib_name[title="Hit Points"]').nextElementSibling;
@@ -328,14 +402,54 @@ new MutationObserver(function () {
     }
 }).observe(node, require('./settings.json'));
 
-},{"../model":4,"../x-out-of-y":18,"./settings.json":10}],10:[function(require,module,exports){
+},{"../model":5,"../x-out-of-y":20,"./settings.json":11}],11:[function(require,module,exports){
 module.exports={
   "childList": true,
   "characterData": true,
   "attributes": true,
   "subtree": true
 }
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
+'use strict';
+
+var getLevels = require('../get-levels');
+var model = require('../model').model;
+
+var then = function then(levels) {
+    var _iteratorNormalCompletion = true;
+    var _didIteratorError = false;
+    var _iteratorError = undefined;
+
+    try {
+        for (var _iterator = Object.keys(levels)[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+            var k = _step.value;
+
+            model['lvl_' + k](levels[k]);
+        }
+    } catch (err) {
+        _didIteratorError = true;
+        _iteratorError = err;
+    } finally {
+        try {
+            if (!_iteratorNormalCompletion && _iterator.return) {
+                _iterator.return();
+            }
+        } finally {
+            if (_didIteratorError) {
+                throw _iteratorError;
+            }
+        }
+    }
+};
+
+getLevels.ready.then(function () {
+    console.debug('Skill level observer initialised');
+    new MutationObserver(function () {
+        return getLevels().then(then);
+    }).observe($("#Profile_Tabs").find(".SkillHolder")[0], require('./settings.json'));
+});
+
+},{"../get-levels":3,"../model":5,"./settings.json":11}],13:[function(require,module,exports){
 'use strict';
 
 var model = require('./model').model;
@@ -377,7 +491,7 @@ $("#Left_menu").find(">.LeftMenu.LeftMenuLinks.side_block").prepend('<div class=
 
 ko.applyBindings(model, root);
 
-},{"./model":4}],12:[function(require,module,exports){
+},{"./model":5}],14:[function(require,module,exports){
 "use strict";
 
 var notification = new buzz.sound("https://cdn.rawgit.com/AlorelUserscripts/battered-shield-notifier/3cad641d61497ba25be33ae9db0ef30742628452/assets/notification.mp3", {
@@ -388,7 +502,7 @@ var notification = new buzz.sound("https://cdn.rawgit.com/AlorelUserscripts/batt
 
 module.exports = { notification: notification };
 
-},{}],13:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 'use strict';
 
 var auraBtn = document.querySelector('#Left_menu a[href="javascript:PopupHandler.Popup(\'Cast\');"] div[data-selector]') || document.createElement("span");
@@ -406,7 +520,7 @@ model.apPCT.subscribe(function (v) {
     }
 });
 
-},{"../model":4,"../notify":5}],14:[function(require,module,exports){
+},{"../model":5,"../notify":6}],16:[function(require,module,exports){
 'use strict';
 
 var stopped = 'Stopped';
@@ -419,7 +533,7 @@ model.timer.subscribe(function (v) {
     }
 });
 
-},{"../model":4,"../notify":5}],15:[function(require,module,exports){
+},{"../model":5,"../notify":6}],17:[function(require,module,exports){
 'use strict';
 
 var notify = require('../notify');
@@ -432,7 +546,7 @@ model.captcha.subscribe(function (visible) {
     }
 });
 
-},{"../model":4,"../notify":5}],16:[function(require,module,exports){
+},{"../model":5,"../notify":6}],18:[function(require,module,exports){
 'use strict';
 
 var notify = require('../notify');
@@ -444,7 +558,7 @@ model.hpPCT.subscribe(function (v) {
     }
 });
 
-},{"../model":4,"../notify":5}],17:[function(require,module,exports){
+},{"../model":5,"../notify":6}],19:[function(require,module,exports){
 'use strict';
 
 var baseCfg = {
@@ -464,7 +578,7 @@ module.exports = function (msg, cfg) {
     $.toast($.extend({ text: msg }, baseCfg, cfg || {}));
 };
 
-},{}],18:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 "use strict";
 
 module.exports = /([0-9\.]+)\s*\/\s*([0-9\.]+)/;

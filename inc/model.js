@@ -24,6 +24,13 @@ for (let k of Object.keys(observables)) {
     observables[k].subscribe(debug, k);
 }
 
+require('./get-levels')().then(levels => {
+    for (let k of Object.keys(levels)) {
+        module.exports.add(`lvl_${k}`, ko.observable(levels[k]));
+    }
+    require('./observers/skill-levels');
+});
+
 module.exports = {
     add: (name, value) => {
         observables[name] = value;

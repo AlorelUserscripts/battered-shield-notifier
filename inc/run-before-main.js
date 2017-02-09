@@ -1,0 +1,1 @@
+ko.options.deferUpdates = true;

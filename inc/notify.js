@@ -3,7 +3,7 @@ const sfx = require('./sfx').notification;
 module.exports = (msg, options) => {
     console.debug(`Notifying: ${msg}`);
     options = $.extend(
-        {text: msg, timeout: 15000, sound: true},
+        {text: msg, timeout: 3600000, sound: true, highlight: true},
         options || {}
     );
 

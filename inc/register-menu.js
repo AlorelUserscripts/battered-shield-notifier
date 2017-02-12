@@ -53,7 +53,7 @@ model.ready.skillLevels.then(levels => {
                         min: 0,
                         style: 'width:85px',
                         'class': 'form-control input-sm',
-                        'data-bind': `textInput: notify_at_lvl_${name}`
+                        'data-bind': `value: notify_at_lvl_${name}`
                     })
                 ),
                 $(`<td><span data-bind="text: lvl_should_notify_${name}_text"/></td>`)

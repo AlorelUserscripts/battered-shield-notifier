@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Battered shield helper
 // @namespace    https://github.com/AlorelUserscripts/battered-shield-notifier
-// @version      0.3
+// @version      0.4
 // @description  Helps with your battered shields
 // @author       Alorel
 // @include      /^https?:\/\/(?=www\.)?batteredshield\.com\/game\/?/
@@ -30,6 +30,7 @@
 // @require      https://cdn.jsdelivr.net/bluebird/3.4.7/bluebird.min.js
 // @require      https://cdn.jsdelivr.net/remodal/1.1.1/remodal.min.js
 // @require      https://raw.githubusercontent.com/AlorelUserscripts/battered-shield-notifier/44d6524c94a9fd58a1c8c63909debbbcbe00ba8d/lib/jquery.toast.min.js
+// @require      https://raw.githubusercontent.com/AlorelUserscripts/battered-shield-notifier/1643a4cf77c8c90a27930f8b868c237720d4053c/inc/run-before-main.js
 
 // @resource toast_css https://raw.githubusercontent.com/AlorelUserscripts/battered-shield-notifier/44d6524c94a9fd58a1c8c63909debbbcbe00ba8d/lib/jquery.toast.min.css
 // @resource remodal_css1 https://cdn.jsdelivr.net/remodal/1.1.1/remodal-default-theme.css
@@ -37,32 +38,3 @@
 // @resource bs_css1 https://cdn.jsdelivr.net/bootstrap/3.3.7/css/bootstrap.min.css
 // @resource bs_css2 https://cdn.jsdelivr.net/bootstrap/3.3.7/css/bootstrap-theme.min.css
 // ==/UserScript==
-
-String.prototype.ucFirst = function () {
-    return this.charAt(0).toUpperCase() + this.slice(1);
-};
-
-$(document).one('DOMContentLoaded', () => {
-    ['remodal_css1', 'remodal_css2', 'toast_css']
-        .map(GM_getResourceText)
-        .map(c => $(`<style>${c}</style>`)[0])
-        .forEach(c => document.body.appendChild(c));
-
-    $('<style>.remodal-overlay,.remodal-wrapper{z-index:100000}</style>').appendTo(document.body);
-
-    require('./inc/observers/action-point');
-    require('./inc/observers/action-timer');
-    require('./inc/observers/captcha');
-    require('./inc/observers/hp');
-    require('./inc/observers/skill-levels');
-
-    require('./inc/subscriptions/action-points');
-    require('./inc/subscriptions/actions-finished');
-    require('./inc/subscriptions/captcha');
-    require('./inc/subscriptions/full-health');
-    require('./inc/subscriptions/skill-levels');
-
-    require('./inc/register-menu');
-
-    require('./inc/toast')(`${GM_info.script.name} v${GM_info.script.version} loaded.`);
-});

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Battered shield helper
 // @namespace    https://github.com/AlorelUserscripts/battered-shield-notifier
-// @version      0.4
+// @version      0.4.1
 // @description  Helps with your battered shields
 // @author       Alorel
 // @include      /^https?:\/\/(?=www\.)?batteredshield\.com\/game\/?/
@@ -30,7 +30,6 @@
 // @require      https://cdn.jsdelivr.net/bluebird/3.4.7/bluebird.min.js
 // @require      https://cdn.jsdelivr.net/remodal/1.1.1/remodal.min.js
 // @require      https://raw.githubusercontent.com/AlorelUserscripts/battered-shield-notifier/44d6524c94a9fd58a1c8c63909debbbcbe00ba8d/lib/jquery.toast.min.js
-// @require      https://raw.githubusercontent.com/AlorelUserscripts/battered-shield-notifier/1643a4cf77c8c90a27930f8b868c237720d4053c/inc/run-before-main.js
 
 // @resource toast_css https://raw.githubusercontent.com/AlorelUserscripts/battered-shield-notifier/44d6524c94a9fd58a1c8c63909debbbcbe00ba8d/lib/jquery.toast.min.css
 // @resource remodal_css1 https://cdn.jsdelivr.net/remodal/1.1.1/remodal-default-theme.css

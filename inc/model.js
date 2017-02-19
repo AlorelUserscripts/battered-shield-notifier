@@ -12,6 +12,17 @@ let observables = {
     notify_timer: gmo.boolean('notify_timer', true)
 };
 
+
+const eventSubscriptionCallback = function (val) {
+    const evt = new CustomEvent(`battered-shield-helper.${this}`, {detail: val});
+    document.dispatchEvent(evt);
+};
+
+
+for (let k of Object.keys(observables)) {
+    observables[k].subscribe(eventSubscriptionCallback, k);
+}
+
 module.exports = {
     add: (name, value) => {
         observables[name] = value;
@@ -27,10 +38,12 @@ module.exports = {
                 let lvl = ko.observable(levels[skill]),
                     notifyAt = gmo.integer(`notify_at_lvl_${skill}`, 0);
 
-                observables[`lvl_${skill}`] = lvl;
-                observables[`notify_at_lvl_${skill}`] = notifyAt;
-                observables[`lvl_should_notify_${skill}`] = ko.pureComputed(() => notifyAt() > 0 && lvl() >= notifyAt());
-                observables[`lvl_should_notify_${skill}_text`] = ko.pureComputed(() => {
+                let newObservables = {};
+
+                newObservables[`lvl_${skill}`] = lvl;
+                newObservables[`notify_at_lvl_${skill}`] = notifyAt;
+                newObservables[`lvl_should_notify_${skill}`] = ko.pureComputed(() => notifyAt() > 0 && lvl() >= notifyAt());
+                newObservables[`lvl_should_notify_${skill}_text`] = ko.pureComputed(() => {
                     if (notifyAt() < 1) {
                         return 'Disabled';
                     } else if (notifyAt() <= lvl()) {
@@ -39,7 +52,7 @@ module.exports = {
                         return `${notifyAt() - lvl()} to go!`;
                     }
                 });
-                observables[`lvl_should_notify_${skill}_class`] = ko.pureComputed(() => {
+                newObservables[`lvl_should_notify_${skill}_class`] = ko.pureComputed(() => {
                     if (notifyAt() < 1) {
                         return 'active text-muted';
                     } else if (notifyAt() <= lvl()) {
@@ -48,6 +61,12 @@ module.exports = {
                         return `info text-primary`;
                     }
                 });
+
+                for (let k of Object.keys(newObservables)) {
+                    newObservables[k].subscribe(eventSubscriptionCallback, k);
+                }
+
+                Object.assign(observables, newObservables);
             }
 
             return levels;

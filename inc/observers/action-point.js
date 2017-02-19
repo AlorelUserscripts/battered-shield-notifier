@@ -6,6 +6,6 @@ new MutationObserver(() => {
     const match = node.textContent.trim().match(regex);
 
     if (match) {
-        model(parseFloat(match[1]) / parseFloat(match[2]) * 100);
+        model(parseFloat(match[1]) / parseFloat(match[2]) * 100.0);
     }
 }).observe(node, require('./settings.json'));

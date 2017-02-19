@@ -8,12 +8,12 @@ Tested in Tampermonkey (Chrome). Won't test on Firefox, but it should work there
 
 # Current functionality
 
-- Notify on full AP
-- Notify on full HP
+- Notify when AP is above a given percentage
+- Notify when HP is above a given percentage
 - Notify on idling
 - Notify on captcha
-- Trigger events on the `document` when any Observable occurs - other scripters can use these as a kind of framework
-for their own scripts
+- Trigger events on the `document` when any Observable occurs - other script authors can use these as a kind of
+framework for their own scripts
 
 # Events
 

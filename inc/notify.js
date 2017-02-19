@@ -1,9 +1,11 @@
 const sfx = require('./sfx').notification;
+const defaults = {timeout: 3600000, sound: true, highlight: true};
 
-module.exports = (msg, options) => {
-    console.debug(`Notifying: ${msg}`);
+module.exports = (text, options) => {
+    console.debug(`Notifying: ${text}`);
     options = $.extend(
-        {text: msg, timeout: 3600000, sound: true, highlight: true},
+        {text},
+        defaults,
         options || {}
     );
 

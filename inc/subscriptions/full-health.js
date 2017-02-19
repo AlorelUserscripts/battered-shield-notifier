@@ -1,8 +1,10 @@
 const notify = require('../notify');
 const model = require('../model').model;
+const options = {timeout: 30000};
 
 model.hpPCT.subscribe(v => {
-    if (v >= 100.0 && model.notify_HP()) {
-        notify('HP full!');
+    const threshold = model.notify_HP_pct();
+    if (threshold > 0 && v >= threshold) {
+        notify(`HP at ${v}%!`, options);
     }
 });

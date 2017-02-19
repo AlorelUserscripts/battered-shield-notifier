@@ -1,33 +1,59 @@
 const gmo = require('./gm-observable');
 const toast = require('./toast');
+const uuid = require('./uuid');
 
-let observables = {
-    apPCT: ko.observable(0),
-    timer: ko.observable(0),
-    hpPCT: ko.observable(0),
-    captcha: ko.observable(false),
-    notify_AP: gmo.boolean('notify_ap', true),
-    notify_HP: gmo.boolean('notify_hp', true),
-    notify_captcha: gmo.boolean('notify_captcha', true),
-    notify_timer: gmo.boolean('notify_timer', true)
+const observables = {
+    notify_HP: gmo.boolean('notify_hp', true), //todo remove
 };
 
+const defaultAddOptions = {
+    hide: false,
+    subscribe: true
+};
 
 const eventSubscriptionCallback = function (val) {
     const evt = new CustomEvent(`battered-shield-helper.${this}`, {detail: val});
     document.dispatchEvent(evt);
 };
 
+const add = (name, value, options) => {
+    options = $.extend({}, defaultAddOptions, options || {});
+    Object.defineProperty(observables, name, {
+        configurable: false,
+        writable: false,
+        enumerable: !options.hide,
+        value
+    });
+    if (options.subscribe) {
+        value.subscribe(eventSubscriptionCallback, name);
+    }
 
-for (let k of Object.keys(observables)) {
-    observables[k].subscribe(eventSubscriptionCallback, k);
-}
+    return module.exports;
+};
+
+add('apPCT', ko.observable(0));
+add('timer', ko.observable(0));
+add('hpPCT', ko.observable(0));
+add('captcha', ko.observable(false));
+
+add('notify_captcha', gmo.boolean('notify_captcha', true));
+add('notify_timer', gmo.boolean('notify_timer', true));
+
+add('notify_AP_pct', gmo.integer('notify_ap_pct', 100));
+add('notify_HP_pct', gmo.integer('notify_hp_pct', 75));
 
 module.exports = {
-    add: (name, value) => {
-        observables[name] = value;
+    add,
+    addInternal: (value, options) => {
+        while (true) {
+            try {
+                const name = '_' + uuid();
+                add(name, value, $.extend({subscribe: false, hide: true}, options || {}));
+                return name;
+            } catch (e) {
 
-        return module.exports;
+            }
+        }
     },
     get model() {
         return observables;
@@ -38,35 +64,9 @@ module.exports = {
                 let lvl = ko.observable(levels[skill]),
                     notifyAt = gmo.integer(`notify_at_lvl_${skill}`, 0);
 
-                let newObservables = {};
-
-                newObservables[`lvl_${skill}`] = lvl;
-                newObservables[`notify_at_lvl_${skill}`] = notifyAt;
-                newObservables[`lvl_should_notify_${skill}`] = ko.pureComputed(() => notifyAt() > 0 && lvl() >= notifyAt());
-                newObservables[`lvl_should_notify_${skill}_text`] = ko.pureComputed(() => {
-                    if (notifyAt() < 1) {
-                        return 'Disabled';
-                    } else if (notifyAt() <= lvl()) {
-                        return 'Reached';
-                    } else {
-                        return `${notifyAt() - lvl()} to go!`;
-                    }
-                });
-                newObservables[`lvl_should_notify_${skill}_class`] = ko.pureComputed(() => {
-                    if (notifyAt() < 1) {
-                        return 'active text-muted';
-                    } else if (notifyAt() <= lvl()) {
-                        return 'success text-success';
-                    } else {
-                        return `info text-primary`;
-                    }
-                });
-
-                for (let k of Object.keys(newObservables)) {
-                    newObservables[k].subscribe(eventSubscriptionCallback, k);
-                }
-
-                Object.assign(observables, newObservables);
+                add(`lvl_${skill}`, lvl);
+                add(`notify_at_lvl_${skill}`, notifyAt);
+                add(`lvl_should_notify_${skill}`, ko.pureComputed(() => notifyAt() > 0 && lvl() >= notifyAt()));
             }
 
             return levels;

@@ -2,6 +2,7 @@
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
 
+- [0.6.3](#063)
 - [0.6.2](#062)
 - [0.6.1](#061)
 - [0.6](#06)
@@ -10,6 +11,9 @@
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 -----
+
+# 0.6.3
+Added changelog button to GM menu
 
 # 0.6.2
 Fixed some issues with static assets

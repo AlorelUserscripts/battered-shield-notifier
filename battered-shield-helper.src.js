@@ -1,6 +1,7 @@
 String.prototype.ucFirst = function () {
     return this.charAt(0).toUpperCase() + this.slice(1);
 };
+const openChangelog = require('./inc/open-changelog');
 
 document.addEventListener('DOMContentLoaded', () => {
     ['remodal_css1', 'remodal_css2', 'toast_css']
@@ -27,12 +28,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (require('./inc/version-compare')(GM_info.script.version, GM_getValue('last_version_used', '0')) > 0) {
         require('./inc/notify')(
             `${GM_info.script.name} has been updated! Click here for the changelog`,
-            {
-                onclick: () => {
-                    window.open(`https://github.com/AlorelUserscripts/battered-shield-notifier/blob/master/CHANGELOG.md#${GM_info.script.version}`);
-                }
-            }
+            {onclick: openChangelog}
         );
     }
     GM_setValue('last_version_used', GM_info.script.version);
 }, {once: true, passive: true});
+GM_registerMenuCommand(`${GM_info.script.name} changelog`, openChangelog);

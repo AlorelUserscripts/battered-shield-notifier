@@ -140,7 +140,7 @@ const openChangelog = require('./open-changelog');
 $(root).append(
     `<h1 class="text-center">${GM_info.script.name} v${GM_info.script.version}</h1>`,
     $('<div class="text-center"/>').append(
-        $('<button/>').click(openChangelog).attr({
+        $('<button/>').click(openChangelog).text('Changelog').attr({
             type: 'button',
             'class': 'btn btn-xs btn-default'
         })

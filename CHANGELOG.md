@@ -2,6 +2,7 @@
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
 
+- [0.6.5](#065)
 - [0.6.4](#064)
 - [0.6.3](#063)
 - [0.6.2](#062)
@@ -12,6 +13,9 @@
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 -----
+
+# 0.6.5
+Fixed changelog button @ modal
 
 # 0.6.4
 Fixed version comparison function bug

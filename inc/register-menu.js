@@ -135,8 +135,16 @@ $rightColumn.append(
     $triggeredList
 );
 
+const openChangelog = require('./open-changelog');
+
 $(root).append(
     `<h1 class="text-center">${GM_info.script.name} v${GM_info.script.version}</h1>`,
+    $('<div class="text-center"/>').append(
+        $('<button/>').click(openChangelog).attr({
+            type: 'button',
+            'class': 'btn btn-xs btn-default'
+        })
+    ),
     '<h3>Notification toggles</h3>',
     $('<div class="btn-group btn-group-xs">')
         .append(

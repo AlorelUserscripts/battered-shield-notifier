@@ -153,7 +153,7 @@ const $modal = $modalWrapper.remodal({hashTracking: false});
 $("#Left_menu")
     .find(">.LeftMenu.LeftMenuLinks.side_block").prepend(
     '<div class="smallchain"/>',
-    $(`<div class="toggle" style="text-align:center"><a href="javascript:void(0)">${GM_info.script.name} options</a></div>`).click(() => {
+    $(`<div class="toggle" style="text-align:center"><a href="javascript:void(0)">${GM_info.script.name} ${GM_info.script.version}</a></div>`).click(() => {
         $modal.open();
     }),
 );

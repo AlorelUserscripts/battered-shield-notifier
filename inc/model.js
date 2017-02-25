@@ -1,6 +1,6 @@
 const gmo = require('./gm-observable');
-const toast = require('./toast');
 const uuid = require('./uuid');
+const notify = require('./notify');
 
 const observables = {
     notify_HP: gmo.boolean('notify_hp', true), //todo remove
@@ -90,5 +90,5 @@ GM_registerMenuCommand(`Debug ${GM_info.script.name}`, () => {
         observables: ob,
         storage: gm
     });
-    toast('See the console');
+    notify('See the console', {timeout: 5000});
 });

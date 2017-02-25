@@ -1,8 +1,19 @@
-Tested in Tampermonkey (Chrome). Won't test on Firefox, but it should work there.
+Tested in Tampermonkey (Chrome). Won't test on Greasemonkey, but it should work there.
 
 -----
 
 [Install](https://raw.githubusercontent.com/AlorelUserscripts/battered-shield-notifier/master/battered-shield-helper.user.js)
+
+-----
+
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+
+- [Current functionality](#current-functionality)
+- [Events](#events)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 -----
 

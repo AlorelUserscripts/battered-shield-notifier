@@ -7,6 +7,11 @@
     "type": "git",
     "url": "git+https://github.com/AlorelUserscripts/battered-shield-notifier.git"
   },
+  "scripts": {
+    "doctoc:changelog": "doctoc CHANGELOG.md --github",
+    "doctoc:readme": "doctoc README.md --github"
+  },
+  "private": true,
   "author": "",
   "license": "ISC",
   "bugs": {
@@ -14,18 +19,20 @@
   },
   "homepage": "https://github.com/AlorelUserscripts/battered-shield-notifier#readme",
   "devDependencies": {
-    "babel-core": "^6.22",
-    "babel-plugin-transform-es5-property-mutators": "^6.22.0",
-    "babel-preset-latest": "^6.22",
-    "babel-preset-stage-0": "^6.22.0",
-    "babel-preset-stage-1": "^6.22.0",
-    "babel-preset-stage-2": "^6.22.0",
-    "babel-preset-stage-3": "^6.22.0",
-    "babelify": "^7.3",
-    "bluebird": "^3.4.7",
-    "browserify": "^14.0",
-    "lodash.values": "^4.3.0",
-    "uglify-js": "^2.7.5",
-    "userscript-utils": "^1.0"
+    "babel-core": "6.22",
+    "babel-plugin-transform-es5-property-mutators": "6.22.0",
+    "babel-preset-latest": "6.22",
+    "babel-preset-stage-0": "6.22.0",
+    "babel-preset-stage-1": "6.22.0",
+    "babel-preset-stage-2": "6.22.0",
+    "babel-preset-stage-3": "6.22.0",
+    "babelify": "7.3",
+    "bluebird": "3.4.7",
+    "browserify": "14.0",
+    "cross-spawn": "5.0.1",
+    "doctoc": "1.2.0",
+    "lodash.values": "4.3.0",
+    "uglify-js": "2.7.5",
+    "userscript-utils": "1.0"
   }
 }

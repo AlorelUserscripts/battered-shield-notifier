@@ -7,6 +7,16 @@ const path = require('path');
 const fs = Promise.promisifyAll(require('fs'));
 const values = require('lodash.values');
 const userscriptUtils = require('userscript-utils');
+const crossSpawn = require('cross-spawn');
+const promiseSpawn = function () {
+    const args = arguments;
+
+    return new Promise((resolve, reject) => {
+        crossSpawn.apply(crossSpawn, args)
+            .on('exit', resolve)
+            .on('error', reject);
+    });
+};
 
 const files = {
     script_src: "battered-shield-helper.src.js",
@@ -81,6 +91,9 @@ actions.stringify_upadate_block = actions.get_metablock.then(str => {
 actions.save_meta_js = actions.stringify_upadate_block.then(str => {
     return fs.writeFileAsync(path.join(__dirname, files.meta_out), str + "\n", 'utf8');
 });
+
+actions.doctocChangelog = promiseSpawn('npm', ['run', 'doctoc:changelog']);
+actions.doctocReadme = promiseSpawn('npm', ['run', 'doctoc:readme']);
 
 //Finish timer
 Promise.all(values(actions)).then(() => {

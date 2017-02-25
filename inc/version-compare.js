@@ -1,5 +1,10 @@
 // Credit: https://jsfiddle.net/ripper234/Xv9WL/28/
 
+const isPositiveInteger = (x) => {
+    // http://stackoverflow.com/a/1019526/11236
+    return /^\d+$/.test(x);
+};
+
 module.exports = (v1, v2) => {
     let v1parts = v1.split('.');
     let v2parts = v2.split('.');

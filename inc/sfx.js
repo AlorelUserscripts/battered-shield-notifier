@@ -1,4 +1,4 @@
-const notification = new buzz.sound("https://cdn.rawgit.com/AlorelUserscripts/battered-shield-notifier/3cad641d61497ba25be33ae9db0ef30742628452/assets/notification.mp3", {
+const notification = new buzz.sound("https://media.githubusercontent.com/media/AlorelUserscripts/battered-shield-notifier/ca49e2e9ea77b4b067bb91faf78f0f7c6086aa8e/assets/notification.mp3", {
     preload: true,
     autoplay: false,
     loop: false

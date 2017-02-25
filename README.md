@@ -31,11 +31,11 @@ framework for their own scripts
 Every observable property can be listened on. A list of properties can be found by opening the console (F12 on Chrome),
 clicking on the Tampermonkey extension icon, and selecting "Debug Battered Shield Helper":
 
-![Screenshot](https://cdn.rawgit.com/AlorelUserscripts/battered-shield-notifier/ed05603312b6d888db85ffd8ec999faf5d4652d5/assets/debug-screenshot.jpg)
+![Screenshot](https://media.githubusercontent.com/media/AlorelUserscripts/battered-shield-notifier/ca49e2e9ea77b4b067bb91faf78f0f7c6086aa8e/assets/debug-screenshot.jpg)
 
 It should then produce an output such as this:
 
-![Screenshot](https://cdn.rawgit.com/AlorelUserscripts/battered-shield-notifier/ed05603312b6d888db85ffd8ec999faf5d4652d5/assets/debug-output-screensho.jpg)
+![Screenshot](https://media.githubusercontent.com/media/AlorelUserscripts/battered-shield-notifier/ca49e2e9ea77b4b067bb91faf78f0f7c6086aa8e/assets/debug-output-screensho.jpg)
 
 Any key under `observables` can be listened on, for example:
 
